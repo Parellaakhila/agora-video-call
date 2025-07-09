@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ZEGOCLOUD Video Call</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f5f7fa;
+      padding: 30px;
+    }
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    input {
+      padding: 12px;
+      width: 250px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #videoContainer {
+      margin-top: 30px;
+      width: 100%;
+      height: 500px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🔴 ZEGOCLOUD Video Call</h2>
+
+  <input type="text" id="roomInput" placeholder="Enter Room ID" />
+  <button onclick="startCall()">Start Call</button>
+
+  <div id="videoContainer"></div>
+
+  <!-- ✅ ZEGOCLOUD UIKit SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@zegocloud/zego-uikit-prebuilt@2.6.0/zego-uikit-prebuilt.min.js"></script>
+
+  <script>
+    async function startCall() {
+      const appID = 1576726020; // 🔁 Replace with your ZEGOCLOUD AppID
+      const serverSecret = '20269e7d7408b605899b9ee995546857'; // 🔁 Replace with your ServerSecret
+
+      const roomID = document.getElementById("roomInput").value.trim();
+      if (!roomID) {
+        alert("Please enter a Room ID");
+        return;
+      }
+
+      const userID = 'sat123' + Date.now();
+      const userName = userID;
+
+      const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+        appID,
+        serverSecret,
+        roomID,
+        userID,
+        userName
+      );
+
+      const zp = ZegoUIKitPrebuilt.create(kitToken);
+
+      zp.joinRoom({
+        container: document.getElementById('videoContainer'),
+        scenario: {
+          mode: ZegoUIKitPrebuilt.VideoConference
+        },
+        showPreJoinView: false
+      });
+    }
+  </script>
+
+</body>
+</html>

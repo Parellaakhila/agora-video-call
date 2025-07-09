@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Agora Video Call</title>
+  <style>
+    video, div[id^="player-"] {
+      width: 300px;
+      height: 200px;
+      margin: 10px;
+      background-color: black;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>Agora Video Call</h2>
+  <button onclick="join()">Join</button>
+  <button onclick="leave()">Leave</button>
+  
+  <h3>Local Video</h3>
+  <div id="local-video"></div>
+
+  <h3>Remote Video</h3>
+  <div id="remote-video"></div>
+
+  <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.19.2.js"></script>
+  <script>
+    const APP_ID = "94ef650e1fa044f982d5a4bc0a561a5f";
+const CHANNEL = "datavalley";
+const TOKEN = "007eJxTYNhrucGj869h+e5p05xuHFRjadRoENxetZmhI0dk36vCexcUGCxNUtPMTA1SDdMSDUxM0iwtjFJME02Skg0STc0ME03TXjvkZTQEMjLYLF3OyMgAgSA+F0NKYkliWWJOTmolAwMAO6Mihg==";
+
+let client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+let localTracks = {};
+let remoteUsers = {};
+
+async function join() {
+  try {
+    const UID = await client.join(APP_ID, CHANNEL, TOKEN, null);
+
+    const [microphoneTrack, cameraTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+    localTracks.audioTrack = microphoneTrack;
+    localTracks.videoTrack = cameraTrack;
+
+    const localPlayer = document.createElement("div");
+    localPlayer.id = `player-${UID}`;
+    document.getElementById("local-video").appendChild(localPlayer);
+    cameraTrack.play(`player-${UID}`);
+
+    await client.publish(Object.values(localTracks));
+
+    client.on("user-published", handleUserPublished);
+    client.on("user-unpublished", handleUserUnpublished);
+  } catch (err) {
+    console.error("Join error", err);
+  }
+}
+
+async function handleUserPublished(user, mediaType) {
+  await client.subscribe(user, mediaType);
+
+  if (mediaType === "video") {
+    const remotePlayer = document.createElement("div");
+    remotePlayer.id = `player-${user.uid}`;
+    document.getElementById("remote-video").appendChild(remotePlayer);
+    user.videoTrack.play(`player-${user.uid}`);
+  }
+
+  if (mediaType === "audio") {
+    user.audioTrack.play();
+  }
+
+  remoteUsers[user.uid] = user;
+}
+
+function handleUserUnpublished(user) {
+  const remotePlayer = document.getElementById(`player-${user.uid}`);
+  if (remotePlayer) {
+    remotePlayer.remove();
+  }
+  delete remoteUsers[user.uid];
+}
+
+async function leave() {
+  for (let trackName in localTracks) {
+    localTracks[trackName].stop();
+    localTracks[trackName].close();
+  }
+
+  await client.leave();
+
+  document.getElementById("local-video").innerHTML = "";
+  document.getElementById("remote-video").innerHTML = "";
+
+  remoteUsers = {};
+}
+
+  </script>
+</body>
+</html>
